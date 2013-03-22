@@ -3,54 +3,86 @@
 Plugin Name: Blogroll In Posts
 Plugin URI: http://www.coolryan.com/plugins/blogroll-in-posts
 Description: Put your favorite links easily into your posts
-Version: 1.0
+Version: 1.1
 Author: Cool Ryan
 Author URI: http://www.coolryan.com/
 */
 
 function bip_shortcode($atts) {
 	extract(shortcode_atts(array(
-	'orderby'          => 'name',
-    'order'            => 'ASC',
-    'limit'            => -1,
-    'category'         => null,
-    'exclude_category' => null,
-    'category_name'    => null,
-    'hide_invisible'   => 1,
-    'show_updated'     => 0,
-    'categorize'       => 1,
-    'title_li'         => __('Bookmarks'),
-    'title_before'     => '<h2>',
-    'title_after'      => '</h2>',
-    'category_orderby' => 'name',
-    'category_order'   => 'ASC',
-    'class'            => 'linkcat',
-    'category_before'  => '<li id=%id class=%class>',
-    'category_after'   => '</li>' 
+    'orderby'        => 'name', 
+    'order'          => 'ASC',
+    'limit'          => -1, 
+    'category'       => null,
+    'category_name'  => null, 
+    'hide_invisible' => 1,
+    'show_updated'   => 0, 
+    'include'        => null,
+    'exclude'        => null,
+    'search'         =>  null,
+	'show_category'  => 0,
+	'title'          => null,		// The title of the blogroll, if empty, none is shown
+	'show_in_list'   => 1,			// whether or not to show in list format or <p> format.
+	'show_description' => 1,		// Whether or not to show the description
+	'show_rating'    => 0			// Wether or not to show the rating
 	),$atts));
-	
+
 	$args = array(
-    'orderby'          => $orderby,
-    'order'            => $order,
-    'limit'            => $limit,
-    'category'         => $category,
-    'exclude_category' => $exclude_category,
-    'category_name'    => $category_name,
-    'hide_invisible'   => $hide_invisible,
-    'show_updated'     => $show_updated,
-    'echo'             => 0,
-    'categorize'       => $categorize,
-    'title_li'         => $title_li,
-    'title_before'     => html_entity_decode($title_before),
-    'title_after'      => html_entity_decode($title_after),
-    'category_orderby' => $category_orderby,
-    'category_order'   => $category_order,
-    'class'            => $class,
-    'category_before'  => html_entity_decode($category_before),
-    'category_after'   => $category_after );
+    'orderby'        => $orderby, 
+    'order'          => $order,
+    'limit'          => $limit, 
+    'category'       => $category,
+    'category_name'  => $category_name, 
+    'hide_invisible' => $hide_invisible,
+    'show_updated'   => $show_updated, 
+    'include'        => $include,
+    'exclude'        => $exclude,
+    'search'         =>  $search);
 	
-	return wp_list_bookmarks( $args );
+	$bookmarks = get_bookmarks($args);
+	$blogroll = '';
+	
+	/** Show title */
+	if(!empty($title)) {
+		$blogroll .= '<h2>'.$title.'</h2>';
+	}
+	
+	if($show_in_list == 1) {
+		$before_link = '<li>';
+		$after_link = '</li>';
+		$before_list = '<ul>';
+		$after_list = '</ul>';
+		$between = ' - ';
+	}
+	else {
+		$before_link = '<p>';
+		$after_link = '</p>';
+		$before_list = '';
+		$after_list = '';
+		$between = '<br />';
+	}
+
+	$blogroll .= $before_list;
+	
+	foreach($bookmarks as $b) {
+		$blogroll .= $before_link.'<a id="'.$b->link_id.'" href="'.$b->link_url.'" target="'.$b->link_target.'">'.$b->link_name.'</a>';
+		
+		/** Show description */
+		if($show_description == 1) {
+			$blogroll .= $between.$b->link_description;
+		}
+		
+		/** Show rating */
+		if($show_rating == 1) {
+			$blogroll .= $between.'Rating: '.$b->link_rating.'/10';
+		}
+		$blogroll .= $after_link;
+	}
+	
+	$blogroll .= $after_list;
+	return $blogroll;
 }
+
 
 
 add_shortcode('blogroll', 'bip_shortcode');
